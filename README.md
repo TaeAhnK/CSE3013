@@ -8,4 +8,5 @@
 
 
 
-## Week1 UNIX 01
+## Week1 UNIX 01 - Shell Programming
+## Week2 UNIX 02 - C/C++ Programming

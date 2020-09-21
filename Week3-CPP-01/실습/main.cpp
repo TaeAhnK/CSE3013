@@ -5,8 +5,6 @@ int main(int argc, char *argv[]) {
 	char *line1, *line2, *tmpline;
 	int  Count, Blanks = 0;
 	int  i, B_Flag, B_Line;
-	B_Flag=0;
-	B_Line=0;
 
 	if ( argc != 2 ) {
 		printf("Usuage: fmt filename | > outfile\n");

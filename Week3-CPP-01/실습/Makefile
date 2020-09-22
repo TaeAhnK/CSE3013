@@ -1,13 +1,13 @@
-CC=gcc
-target=fmt
-objects=main.o Output.o String_Manipulation.o
+CC=g++
+TARGET=a.out
+OBJECTS=main.o Array.o RangeArray.o
+CPPFLAGS=-g
+$(TARGET): $(OBJECTS)
+	$(CC) -o  $(TARGET) $(OBJECTS)
 
-$(target): $(objects)
-	$(CC) -o $(target) $(objects)
-
-$(objects): Header.h
+$(OBJECTS): Array.h RangeArray.h
 
 .PHONY: clean
 clean:
-	rm -f $(objects) $(target)
+	rm -f $(OBJECTS) $(TARGET)
 

@@ -4,22 +4,29 @@ static struct sigaction act, oact;
 
 int main(){
 	int exit=0;
-
+	int i;
+	ScoreNode *p;
 	initscr();
 	noecho();
 	keypad(stdscr, TRUE);	
-
+	createRankList();
 	srand((unsigned int)time(NULL));
 
 	while(!exit){
 		clear();
 		switch(menu()){
 		case MENU_PLAY: play(); break;
+		case MENU_RANK: rank(); break;
 		case MENU_EXIT: exit=1; break;
 		default: break;
 		}
 	}
-
+	p = ScoreList;
+	while (p!= NULL) {
+		ScoreList = p->next;
+		free(p);
+		p = ScoreList;
+	}
 	endwin();
 	system("clear");
 	return 0;
@@ -381,20 +388,157 @@ void DrawShadow(int y, int x, int blockID,int blockRotate){
 }
 
 void createRankList(){
-	// user code
+	FILE *fp;
+	ScoreNode *current;
+	ScoreNode *temp;
+	int i;
+
+	current = NULL;
+
+	fp = fopen("rank.txt", "r");
+	if (fp == NULL) {
+		fp = fopen("rank.txt", "w"); // 새 파일 생성
+		fputc('0', fp);
+		ScoreList = NULL;
+		fclose(fp);
+		return;
+	}
+
+	fscanf(fp, "%d", &ScoreListLength);
+
+
+	for (i = 0; i < ScoreListLength; i++) {
+		temp = (ScoreNode *) malloc (sizeof(ScoreNode));
+		fscanf(fp, "%s\t%d", &temp->name, &temp->score);
+		temp->next = NULL;
+
+		if (current == NULL) {
+			current = temp;
+			ScoreList = temp;
+		}
+		else {
+			current->next = temp;
+			current = current->next;
+		}	
+	}
+
+	fclose (fp);
+	return;
 }
 
 void rank(){
-	// user code
+	int back = 0;
+	int X, Y, i;
+	ScoreNode *current;
+
+	clear();
+	printw("1. List ranks from X to Y\n");
+	printw("2. List ranks by a specific name\n");
+	printw("3. Delete a specific rank X\n");
+	printw("4. Back\n");
+	
+	while(!back){
+		switch(wgetch(stdscr)){
+		case '1':
+			echo();
+			printw("Enter rank you want to see\nX : ");
+			if (scanw("%d", &X) == -1) {
+				X = 1;
+			}
+			printw("Y : ");
+			if (scanw("%d", &Y) == -1) {
+				Y = ScoreListLength;
+			}
+			noecho();
+			if (X > ScoreListLength || Y > ScoreListLength || X > Y || X <= 0 || Y <= 0) {
+				printw("search failure: no rank in the list\n");
+				break;
+			}
+			printw("\tName\t|\tScore\n");
+			printw("-------------------------------------\n");
+			current = ScoreList;
+			for (i = 1; i < X; i++){
+				current = current->next;
+			}
+			for (i=X; i<=Y; i++) {
+				printw("%s\t\t|%d\n", current->name, current->score);
+				current = current->next;
+			}
+			break;
+		case '2': break;
+		case '3': break;
+		case '4': back=1; break;
+		default: break;
+		}
+	}	
 }
 
 void writeRankFile(){
-	// user code
+	FILE *fp;
+	int i;
+	ScoreNode *current;
+
+	current = ScoreList;
+	if (ScoreModifiedFlag == 0) {
+		return;
+	}
+	else {
+		fp = fopen("rank.txt", "w");
+		fprintf(fp, "%d\n", ScoreListLength);
+		for (i=0; i<ScoreListLength; i++) {
+			fprintf(fp, "%s\t%d\n", current->name, current->score);
+			current = current->next;
+		}
+	}
+	fclose(fp);
+	return;
 }
 
 void newRank(int score){
-	// user code
+	ScoreNode *current, *front, *back;
+	ScoreNode *temp;
+	int i;
+
+	temp = (ScoreNode *) malloc (sizeof(ScoreNode));
+	temp->score = score;
+	temp->next = NULL;
+	clear();
+	echo();
+	printw("Score: %d\nEnter Your Name : ", score);
+	scanw("%s", &temp->name);
+	noecho();
+
+	if (ScoreList == NULL) {
+		ScoreList = temp;
+	}
+	else {
+		current = ScoreList;
+		for (i = 0; i < ScoreListLength; i++) {
+			if (current->next == NULL) {
+				current->next = temp;
+				break;
+			}
+			else if (ScoreList->score <= score) {
+				temp->next = ScoreList;
+				ScoreList = temp;
+				break;
+			}
+			else if (current->score >= score && score >= current->next->score) {
+				front = current;
+				back = current->next;
+				front->next = temp;
+				temp->next = back;
+				break;
+			}
+			current = current->next;
+		}
+	}
+
+	ScoreModifiedFlag = 1;
+	ScoreListLength++;
+	writeRankFile();
 }
+
 
 void DrawRecommend(int y, int x, int blockID,int blockRotate){
 	// user code

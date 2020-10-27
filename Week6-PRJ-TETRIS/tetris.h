@@ -21,6 +21,7 @@
 
 // menu number
 #define MENU_PLAY '1'
+#define MENU_RANK '2'
 #define MENU_EXIT '4'
 
 // 사용자 이름의 길이
@@ -34,6 +35,15 @@ typedef struct _RecNode{
 	struct _RecNode *c[CHILDREN_MAX];
 } RecNode;
 
+typedef struct _ScoreNode {
+	int score;
+	char name [NAMELEN];
+	struct _ScoreNode *next;
+} ScoreNode;
+
+ScoreNode *ScoreList = NULL;
+int ScoreListLength = 0;
+int ScoreModifiedFlag = 0;
 /* [blockShapeID][# of rotate][][]*/
 const char block[NUM_OF_SHAPE][NUM_OF_ROTATE][BLOCK_HEIGHT][BLOCK_WIDTH] ={
 	{/*[0][][][]					▩▩▩▩*/
@@ -337,6 +347,7 @@ void writeRankFile();
  *	return	: none
  ***********************************************************/
 void newRank(int score);
+
 
 /***********************************************************
  *	추천 블럭 배치를 구한다.

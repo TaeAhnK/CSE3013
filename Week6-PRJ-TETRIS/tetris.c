@@ -41,6 +41,7 @@ void InitTetris(){
 
 	nextBlock[0]=rand()%7;
 	nextBlock[1]=rand()%7;
+	nextBlock[2]=rand()%7;
 	blockRotate=0;
 	blockY=-1;
 	blockX=WIDTH/2-2;
@@ -50,7 +51,8 @@ void InitTetris(){
 
 	DrawOutline();
 	DrawField();
-	DrawBlock(blockY,blockX,nextBlock[0],blockRotate,' ');
+	//DrawBlock(blockY,blockX,nextBlock[0],blockRotate,' ');
+	DrawBlocksWithFeatures(blockY, blockX, nextBlock[0], blockRotate);
 	DrawNextBlock(nextBlock);
 	PrintScore(score);
 }
@@ -64,11 +66,14 @@ void DrawOutline(){
 	move(2,WIDTH+10);
 	printw("NEXT BLOCK");
 	DrawBox(3,WIDTH+10,4,8);
-
-	/* score를 보여주는 공간의 태두리를 그린다.*/
+	/* next next block을 보여주는 공간의 태두리를 그린다.*/
 	move(9,WIDTH+10);
+	printw("NEXT NEXT BLOCK");
+	DrawBox(10,WIDTH+10,4,8);
+	/* score를 보여주는 공간의 태두리를 그린다.*/
+	move(16,WIDTH+10);
 	printw("SCORE");
-	DrawBox(10,WIDTH+10,1,8);
+	DrawBox(17,WIDTH+10,1,8);
 }
 
 int GetCommand(){
@@ -140,12 +145,14 @@ void DrawField(){
 			else printw(".");
 		}
 	}
+	move(HEIGHT,WIDTH+10);
 }
 
 
 void PrintScore(int score){
-	move(11,WIDTH+11);
+	move(18,WIDTH+11);
 	printw("%8d",score);
+	move(HEIGHT,WIDTH+10);
 }
 
 void DrawNextBlock(int *nextBlock){
@@ -154,6 +161,17 @@ void DrawNextBlock(int *nextBlock){
 		move(4+i,WIDTH+13);
 		for( j = 0; j < 4; j++ ){
 			if( block[nextBlock[1]][0][i][j] == 1 ){
+				attron(A_REVERSE);
+				printw(" ");
+				attroff(A_REVERSE);
+			}
+			else printw(" ");
+		}
+	}
+	for( i = 0; i < 4; i++ ){
+		move(11+i,WIDTH+13);
+		for( j = 0; j < 4; j++ ){
+			if( block[nextBlock[2]][0][i][j] == 1 ){
 				attron(A_REVERSE);
 				printw(" ");
 				attroff(A_REVERSE);
@@ -311,7 +329,9 @@ void DrawChange(char f[HEIGHT][WIDTH],int command,int currentBlock,int blockRota
 		default:
 			break;
 	}
-	DrawBlock(blockY, blockX, currentBlock, blockRotate, ' ');
+	// DrawBlock(blockY, blockX, currentBlock, blockRotate, ' ');
+	DrawField();
+	DrawBlocksWithFeatures (blockY, blockX, currentBlock, blockRotate);
 }
 
 void BlockDown(int sig){
@@ -325,12 +345,12 @@ void BlockDown(int sig){
 			gameOver = 1;
 		}
 		
-		AddBlockToField(field, nextBlock[0], blockRotate, blockY, blockX);
+		score += AddBlockToField(field, nextBlock[0], blockRotate, blockY, blockX); // touched * 10
 		
-		score += DeleteLine(field);                                // 100 per pop
-		score += 10;                                               // 10 per block
+		score += DeleteLine(field);                                // deleted line^2
 		nextBlock[0] = nextBlock[1];                               // Set NextBlock
-		nextBlock[1] = rand()%7;
+		nextBlock[1] = nextBlock[2];
+ 		nextBlock[2] = rand()%7;
 		DrawNextBlock(nextBlock);                                  // Apply changes of the nextBlock Box
 
 		blockX = WIDTH/2 -2;                                       // Initialize the Location of currentBlock
@@ -338,22 +358,28 @@ void BlockDown(int sig){
 		blockRotate = 0;
 
 		DrawField();                                               // Apply changes of the field (Deleteline)
-		DrawBlock(blockY, blockX, nextBlock[0], blockRotate, ' '); // To reduce the delay when block first appears
+		//DrawBlock(blockY, blockX, nextBlock[0], blockRotate, ' ');
+		DrawBlocksWithFeatures (blockY, blockX, nextBlock[0], blockRotate);  // To reduce the delay when block first appears
 		PrintScore(score);                                         // Apply changes of the score
 		move(HEIGHT,WIDTH+10);                                     // move cursor to not cover other display
 	}
 	timed_out = 0;
 }
 
-void AddBlockToField(char f[HEIGHT][WIDTH],int currentBlock,int blockRotate, int blockY, int blockX){
-	int i, j;
+int AddBlockToField(char f[HEIGHT][WIDTH],int currentBlock,int blockRotate, int blockY, int blockX){
+	int i, j, touched;
+	touched = 0;
 	for (i = 0; i < BLOCK_HEIGHT; i++){
 		for (j = 0; j < BLOCK_WIDTH; j++){
 			if (block[currentBlock][blockRotate][i][j] == 1){
-				field[blockY+i][blockX+j] = 1;
+				f[blockY+i][blockX+j] = 1;
+				if (f[blockY+i+1][blockX+j]==1||blockY+i+1==HEIGHT) {
+					touched++;
+				}
 			}
 		}
 	}
+	return touched*10;
 }
 
 int DeleteLine(char f[HEIGHT][WIDTH]){
@@ -374,18 +400,30 @@ int DeleteLine(char f[HEIGHT][WIDTH]){
 					f[k][l] = f[k-1][l];
 				}
 			}
-			scr += 100;         // 100 per pop
+			scr += 1;         // 1 per pop
 		}
 		fullFlag = 0;
 	}
-	return scr;
+	return scr*scr * 100;
 }
 
 ///////////////////////////////////////////////////////////////////////////
 
 void DrawShadow(int y, int x, int blockID,int blockRotate){
-	// user code
+	int endY;
+	endY = y;
+	while (endY < HEIGHT && CheckToMove(field, blockID, blockRotate, endY+1, x) == 1){
+		endY++;
+	}
+	DrawBlock(endY, x, blockID, blockRotate, '/');
 }
+
+void DrawBlocksWithFeatures (int y, int x, int blockID, int blockRotate) {
+	DrawShadow(y,x,blockID,blockRotate);
+	DrawBlock(y,x,blockID,blockRotate,' ');
+}
+
+///////////////////////////////////////////////////////////////////////////
 
 void createRankList(){
 	FILE *fp;
@@ -428,9 +466,13 @@ void createRankList(){
 
 void rank(){
 	int back = 0;
-	int X, Y, i;
+	int foundflag = 0;
+	int freedflag = 0;
+	int X, Y, i, eraseRank;
+	char name[NAMELEN];
 	ScoreNode *current;
-
+	ScoreNode *temp;
+	current = ScoreList;
 	clear();
 	printw("1. List ranks from X to Y\n");
 	printw("2. List ranks by a specific name\n");
@@ -440,6 +482,7 @@ void rank(){
 	while(!back){
 		switch(wgetch(stdscr)){
 		case '1':
+			current = ScoreList;
 			echo();
 			printw("Enter rank you want to see\nX : ");
 			if (scanw("%d", &X) == -1) {
@@ -456,7 +499,6 @@ void rank(){
 			}
 			printw("\tName\t|\tScore\n");
 			printw("-------------------------------------\n");
-			current = ScoreList;
 			for (i = 1; i < X; i++){
 				current = current->next;
 			}
@@ -465,8 +507,61 @@ void rank(){
 				current = current->next;
 			}
 			break;
-		case '2': break;
-		case '3': break;
+		case '2':
+			current = ScoreList;
+			echo();
+			printw("Enter the Name : ");
+			scanw("%s", &name);
+			noecho();
+			for (i = 0; i < ScoreListLength; i++) {
+				if (strcmp(name, current->name) == 0){
+					if (foundflag == 0){
+						foundflag = 1;
+						printw("\tName\t|\tScore\n");
+						printw("-------------------------------------\n");
+					}
+					printw("%s\t\t|%d\n", current->name, current->score);
+				}
+				current = current->next;
+			}
+			if (foundflag == 0){
+				printw("search failure: the rank not in the list\n");
+			}
+			foundflag = 0;
+			break;
+		case '3':
+			current = ScoreList;
+			echo();
+			printw("Enter the Rank Num to Erase : ");
+			scanw("%d", &eraseRank);
+			noecho();
+			if (eraseRank <= 0 || eraseRank > ScoreListLength || ScoreListLength == 0){
+				printw("search failure: the rank not in the list\n");
+				break;
+			}
+			if (eraseRank == 1){
+					temp = current;
+					ScoreList = current->next;
+					free(temp);
+					freedflag = 1;
+				}
+			else {
+				for (i = 1; i < eraseRank-1; i++) {
+					current= current->next;
+				}
+				temp = current->next;
+				current->next = current->next->next;
+				free(temp);
+				freedflag = 1;
+			}
+			
+			if (freedflag == 1){
+				printw("Result: the Rank is deleted\n");
+				ScoreModifiedFlag = 1;
+				ScoreListLength--;
+				writeRankFile();
+			}
+			break;			
 		case '4': back=1; break;
 		default: break;
 		}
@@ -539,6 +634,7 @@ void newRank(int score){
 	writeRankFile();
 }
 
+///////////////////////////////////////////////////////////////////////////
 
 void DrawRecommend(int y, int x, int blockID,int blockRotate){
 	// user code

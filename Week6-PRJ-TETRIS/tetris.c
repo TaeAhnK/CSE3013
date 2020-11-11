@@ -4,8 +4,9 @@ static struct sigaction act, oact;
 
 int main(){
 	int exit=0;
-	int i;
+	int i, j;
 	ScoreNode *p;
+	ScoreNode *n = NULL;
 	initscr();
 	noecho();
 	keypad(stdscr, TRUE);	
@@ -17,16 +18,12 @@ int main(){
 		switch(menu()){
 		case MENU_PLAY: play(); break;
 		case MENU_RANK: rank(); break;
+		case MENU_REC: recommendedPlay(); break;
 		case MENU_EXIT: exit=1; break;
 		default: break;
 		}
 	}
-	p = ScoreList;
-	while (p!= NULL) {
-		ScoreList = p->next;
-		free(p);
-		p = ScoreList;
-	}
+
 	endwin();
 	system("clear");
 	return 0;
@@ -39,16 +36,27 @@ void InitTetris(){
 		for(i=0;i<WIDTH;i++)
 			field[j][i]=0;
 
-	nextBlock[0]=rand()%7;
-	nextBlock[1]=rand()%7;
-	nextBlock[2]=rand()%7;
+	for (i = 0; i <= MAX_LEVEL; i++) {
+		nextBlock[i] = rand()%7;
+	}
+
 	blockRotate=0;
 	blockY=-1;
 	blockX=WIDTH/2-2;
 	score=0;	
 	gameOver=0;
 	timed_out=0;
+ 
+	root = (RecNode *) malloc (sizeof(RecNode));
 
+    root->lv = 0;
+    for(i = 0; i<HEIGHT; i++) {
+		for(j = 0; j<WIDTH; j++) {
+			root->f[i][j]=field[i][j];
+		}
+	}
+
+    recommend(root);
 	DrawOutline();
 	DrawField();
 	//DrawBlock(blockY,blockX,nextBlock[0],blockRotate,' ');
@@ -266,16 +274,19 @@ int CheckToMove(char f[HEIGHT][WIDTH],int currentBlock,int blockRotate, int bloc
 	for (i = 0; i < BLOCK_HEIGHT; i++){
 		for (j = 0; j < BLOCK_WIDTH; j++){
 			if (block[currentBlock][blockRotate][i][j] == 1){
-				if (field[i+blockY][j+blockX] == 1){  // 1) 블록을 놓으려고 하는 필드에 이미 블록이 쌓여져 있는지 여부
+				if ((i+blockY) >= HEIGHT){       		// 2) 블록을 나타내는 4×4 행렬의 각 요소의 실제 필드상의 y 좌표가 HEIGHT보다 크거나 같은지 여부
 					return 0;
 				}
-				else if ((i+blockY) >= HEIGHT){       // 2) 블록을 나타내는 4×4 행렬의 각 요소의 실제 필드상의 y 좌표가 HEIGHT보다 크거나 같은지 여부
+				if ((j+blockX) < 0){           	// 3) 블록을 나타내는 4×4 행렬의 각 요소의 실제 필드상의 x 좌표가 0보다 작은지 여부
 					return 0;
 				}
-				else if ((j+blockX) < 0){             // 3) 블록을 나타내는 4×4 행렬의 각 요소의 실제 필드상의 x 좌표가 0보다 작은지 여부
+				if ((j+blockX) >= WIDTH){	        // 4) 블록을 나타내는 4×4 행렬의 각 요소의 실제 필드상의 x 좌표가 WIDTH보다 크거나 같은지 여부
 					return 0;
 				}
-				else if ((j+blockX) >= WIDTH){        // 4) 블록을 나타내는 4×4 행렬의 각 요소의 실제 필드상의 x 좌표가 WIDTH보다 크거나 같은지 여부
+				if ((i+blockY) < 0) {
+					return 0;
+				}
+				if (f[i+blockY][j+blockX]) {	  // 1) 블록을 놓으려고 하는 필드에 이미 블록이 쌓여져 있는지 여부
 					return 0;
 				}
 			}
@@ -335,6 +346,7 @@ void DrawChange(char f[HEIGHT][WIDTH],int command,int currentBlock,int blockRota
 }
 
 void BlockDown(int sig){
+	int i, j;
 
 	if (CheckToMove(field, nextBlock[0], blockRotate, blockY+1, blockX) == 1){
 		blockY++;
@@ -348,11 +360,19 @@ void BlockDown(int sig){
 		score += AddBlockToField(field, nextBlock[0], blockRotate, blockY, blockX); // touched * 10
 		
 		score += DeleteLine(field);                                // deleted line^2
-		nextBlock[0] = nextBlock[1];                               // Set NextBlock
-		nextBlock[1] = nextBlock[2];
- 		nextBlock[2] = rand()%7;
+		
+		for (i = 0; i < MAX_LEVEL; i++) {
+			nextBlock[i] = nextBlock[i+1];
+		}
+		nextBlock[MAX_LEVEL] = rand()%7;
 		DrawNextBlock(nextBlock);                                  // Apply changes of the nextBlock Box
-
+		
+		for(i = 0; i<HEIGHT; i++) {
+			for(j = 0; j<WIDTH; j++) {
+			root->f[i][j]=field[i][j];
+		}
+	}
+		recommend(root);
 		blockX = WIDTH/2 -2;                                       // Initialize the Location of currentBlock
 		blockY = -1; 
 		blockRotate = 0;
@@ -419,6 +439,7 @@ void DrawShadow(int y, int x, int blockID,int blockRotate){
 }
 
 void DrawBlocksWithFeatures (int y, int x, int blockID, int blockRotate) {
+	DrawRecommend(recY, recX, recID, recR);
 	DrawShadow(y,x,blockID,blockRotate);
 	DrawBlock(y,x,blockID,blockRotate,' ');
 }
@@ -637,17 +658,167 @@ void newRank(int score){
 ///////////////////////////////////////////////////////////////////////////
 
 void DrawRecommend(int y, int x, int blockID,int blockRotate){
-	// user code
+	DrawBlock(y,x,blockID,blockRotate,'R');
 }
 
-int recommend(RecNode *root){
-	int max=0; // 미리 보이는 블럭의 추천 배치까지 고려했을 때 얻을 수 있는 최대 점수
+int recommend(RecNode *root) {
+	int max = -1;
+	int i, j, rotation, xpos, ypos;
+	int tempScore = 0;
+	RecNode *temp;
+	int childIndex = 0;
+	RecNode *freetemp;
 
-	// user code
+	for (rotation = 0; rotation < NUM_OF_ROTATE; rotation++) {
+		for (xpos = -2; xpos < WIDTH; xpos++, childIndex++) {
+			if (!CheckToMove(root->f, nextBlock[root->lv], rotation, 0, xpos)) {
+				continue;
+			}
+			temp = (RecNode*) malloc (sizeof(RecNode));
+			recMem += recNodeSize;
+			// 1. Copy field shape
+			for (i = 0; i < HEIGHT; i++) {
+				for (j = 0; j < WIDTH; j++) {
+					temp->f[i][j] = root->f[i][j];
+				}
+			}
+
+			// 2. Calculate Y position
+			ypos = 0;
+			while (CheckToMove(temp->f, nextBlock[root->lv], rotation, ypos+1, xpos) == 1) {
+				ypos++;
+			}
+			
+			// 3. Calculate lv
+			temp->lv = root->lv + 1;
+
+			// 4. Calculate score
+			tempScore = AddBlockToField(temp->f, nextBlock[root->lv], rotation, ypos, xpos);
+			tempScore += DeleteLine(temp->f);
+
+			// Recursion
+			if (temp->lv < MAX_LEVEL) {
+				tempScore += recommend(temp);
+			}
+
+			// 5. Connect Tree
+
+			// Renew Max
+			if (max <= tempScore) {
+				max = tempScore;
+				if (root->lv == 0) {
+					recX = xpos;
+					recY = ypos;
+					recR = rotation;
+					recID = nextBlock[root->lv];
+				}
+			}
+			root->c[childIndex] = temp;
+
+		}
+	}
+
+	for (i = 0; i <= childIndex; i++) {
+		if (!root->c[i]) {
+			freetemp = root->c[i];
+			root->c[i] = NULL;
+			free(freetemp);
+		}
+	}
 
 	return max;
 }
 
+
 void recommendedPlay(){
-	// user code
+	int command;
+	time_t start = time(NULL);
+	time_t finish;
+	float timet;
+	float spacet;
+
+	recTime = 0;
+
+	clear();
+	act.sa_handler = recBlockDown;
+	sigaction(SIGALRM,&act,&oact);
+	InitTetris();
+	do{
+		if(timed_out==0){
+			alarm(1);
+			timed_out=1;
+		}
+
+		command = GetCommand();
+		if(ProcessCommand(command)==QUIT){
+			finish = time(NULL);
+			recTime = (double)difftime(finish, start);
+			alarm(0);
+			DrawBox(HEIGHT/2-1,WIDTH/2-5,3,16);
+			move(HEIGHT/2,WIDTH/2-3);
+			printw("play time=%.1f", recTime);
+			move(HEIGHT/2+1,WIDTH/2-3);
+			timet = score/recTime;
+			printw("time(t)=%.1f", timet);
+			move(HEIGHT/2+2,WIDTH/2-3);
+			spacet = (double)score / (double)(recMem/1024);
+			printw("space(t)=%.3f", spacet);
+			refresh();
+			getch();
+
+			return;
+		}
+	}while(!gameOver);
+	finish = time(NULL);
+	recTime = (double)difftime(finish, start);
+	alarm(0);
+	getch();
+	DrawBox(HEIGHT/2-1,WIDTH/2-5,3,16);
+	move(HEIGHT/2,WIDTH/2-3);
+	printw("play time=%.1f", recTime);
+	move(HEIGHT/2+1,WIDTH/2-3);
+	timet = score/recTime;
+	printw("time(t)=%.1f", timet);
+	move(HEIGHT/2+2,WIDTH/2-3);
+	spacet = (double)score / (double)(recMem/1024);
+	printw("space(t)=%.3f", spacet);
+
+
+	refresh();
+	getch();
+}
+
+void recBlockDown (int sig) {
+	int i, j;
+
+	if (CheckToMove(field,nextBlock[0],recR,recY,recX) == 0){
+		gameOver = 1;
+	}
+	
+	score += AddBlockToField(field, nextBlock[0], recR, recY, recX);
+	
+	score += DeleteLine(field);                                
+	
+	for (i = 0; i < MAX_LEVEL; i++) {
+		nextBlock[i] = nextBlock[i+1];
+	}
+	nextBlock[MAX_LEVEL] = rand()%7;
+	DrawNextBlock(nextBlock);                                
+	
+	for(i = 0; i<HEIGHT; i++) {
+		for(j = 0; j<WIDTH; j++) {
+			root->f[i][j]=field[i][j];
+		}
+	}
+	recommend(root);
+	blockX = WIDTH/2 -2;                                     
+	blockY = -1; 
+	blockRotate = 0;
+
+	DrawField();                                             
+	DrawBlock(blockY, blockX, nextBlock[0], blockRotate, ' ');
+	PrintScore(score);                                  
+	move(HEIGHT,WIDTH+10);                
+	timed_out = 0;
+
 }

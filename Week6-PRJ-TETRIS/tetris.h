@@ -17,11 +17,13 @@
 #define NUM_OF_ROTATE	4
 #define BLOCK_HEIGHT	4
 #define BLOCK_WIDTH	4
-#define BLOCK_NUM	3
+#define MAX_LEVEL	2 // change this for deeper search
+#define BLOCK_NUM	2
 
 // menu number
 #define MENU_PLAY '1'
 #define MENU_RANK '2'
+#define MENU_REC '3'
 #define MENU_EXIT '4'
 
 // 사용자 이름의 길이
@@ -29,10 +31,13 @@
 
 #define CHILDREN_MAX 36
 
+
 typedef struct _RecNode{
 	int lv,score;
-	char (*f)[WIDTH];
+	char f[HEIGHT][WIDTH];
 	struct _RecNode *c[CHILDREN_MAX];
+	int curBlockID;
+	int recBlockX, recBlockY, recBlockRotate;
 } RecNode;
 
 typedef struct _ScoreNode {
@@ -44,6 +49,15 @@ typedef struct _ScoreNode {
 ScoreNode *ScoreList = NULL;
 int ScoreListLength = 0;
 int ScoreModifiedFlag = 0;
+
+int recX = 0;
+int recY = 0;
+int recR = 0;
+int recID = 0;
+double recTime;
+int recMem = 0;
+int recNodeSize = sizeof(RecNode);
+RecNode *root;
 /* [blockShapeID][# of rotate][][]*/
 const char block[NUM_OF_SHAPE][NUM_OF_ROTATE][BLOCK_HEIGHT][BLOCK_WIDTH] ={
 	{/*[0][][][]					▩▩▩▩*/
@@ -147,7 +161,7 @@ const char block[NUM_OF_SHAPE][NUM_OF_ROTATE][BLOCK_HEIGHT][BLOCK_WIDTH] ={
 };
 
 char field[HEIGHT][WIDTH];	/* 테트리스의 메인 게임 화면 */
-int nextBlock[BLOCK_NUM];	/* 현재 블럭의 ID와 다음 블럭의 ID들을 저장; [0]: 현재 블럭; [1]: 다음 블럭 */
+int nextBlock[MAX_LEVEL+1];	/* 현재 블럭의 ID와 다음 블럭의 ID들을 저장; [0]: 현재 블럭; [1]: 다음 블럭 */
 int blockRotate,blockY,blockX;	/* 현재 블럭의 회전, 블럭의 Y 좌표, 블럭의 X 좌표*/
 int score;			/* 점수가 저장*/
 int gameOver=0;			/* 게임이 종료되면 1로 setting된다.*/
@@ -364,6 +378,6 @@ int recommend(RecNode *root);
  *	return	: none
  ***********************************************************/
 void recommendedPlay();
-
+void recBlockDown (int sig);
 
 #endif

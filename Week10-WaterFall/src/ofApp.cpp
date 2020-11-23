@@ -47,8 +47,17 @@ void ofApp::draw() {
         ofDrawCircle(inputdots[selc_index].x1, inputdots[selc_index].y1, 10);
 
          // 2nd week portion.
-        ofSetLineWidth(2);
+        ofSetLineWidth(4);
+        ofSetColor(0, 0, 255);
+        if (waterlineflag) {
+            Node* p = inputdots[selc_index].water->front();
+            while (p->link != NULL) {
+                ofDrawLine(p->x, p->y, p->link->x, p->link->y);
+                p = p->link;
+            }
+        }
     }
+
 }
 
 //--------------------------------------------------------------
@@ -61,10 +70,16 @@ void ofApp::keyPressed(int key) {
     if (key == 'q') {
         // Reset flags
         draw_flag = 0;
+        waterlineflag = 0;
 
+        // Free Linked List of waterfall points
+        for (int i = 0; i < num_of_dot; i++) {
+            inputdots[i].water->freeSLL();
+        }
         // Free the dynamically allocated memory exits.
         delete[] inputlines;
         delete[] inputdots;
+
         cout << "Dynamically allocated memory has been freed." << endl;
 
         _Exit(0);
@@ -72,16 +87,16 @@ void ofApp::keyPressed(int key) {
     if (key == 'd') {
         if (!load_flag) return;
         draw_flag = 1;
-        /* COMSIL1-TODO 2: This is draw control part.
-        You should draw only after when the key 'd' has been pressed.
-        */
-
     }
     if (key == 's') {
         // 2nd week portion.
+        if (draw_flag)
+            waterlineflag = 1;
+
     }
     if (key == 'e') {
         // 2nd week portion.
+        waterlineflag = 0;
     }
 }
 
@@ -105,13 +120,17 @@ void ofApp::keyReleased(int key) {
      You can select dot in which water starts to flow by left, right direction key (<- , ->).
      */
     if (key == OF_KEY_RIGHT) {
-        selc_index = (selc_index + 1) % num_of_dot;
-        cout << "Selcted Dot Coordinate is (" << inputdots[selc_index].x1 <<", " << inputdots[selc_index].y1 << ")" << endl;
+        if (waterlineflag == 0) {
+            selc_index = (selc_index + 1) % num_of_dot;
+            cout << "Selcted Dot Coordinate is (" << inputdots[selc_index].x1 << ", " << inputdots[selc_index].y1 << ")" << endl;
+        }
     }
     if (key == OF_KEY_LEFT) {
-        
-        selc_index = (selc_index-1 + num_of_dot) % num_of_dot;
-        cout << "Selcted Dot Coordinate is (" << inputdots[selc_index].x1 << ", " << inputdots[selc_index].y1 << ")" << endl;
+        if (waterlineflag == 0) {
+            selc_index = (selc_index - 1 + num_of_dot) % num_of_dot;
+            cout << "Selcted Dot Coordinate is (" << inputdots[selc_index].x1 << ", " << inputdots[selc_index].y1 << ")" << endl;
+        }
+
         
     }
 }
@@ -255,11 +274,106 @@ void ofApp::processOpenFileSelection(ofFileDialogResult openFileResult) {
         } // End of else if.
     } // End of for-loop (Read file line by line).
     selc_index = 0;
-    //initializeWaterLines();
+
+    initializeWaterLines();
 }
 
+/* Calculate the water points */
 void ofApp::initializeWaterLines() {
-    ;
+    float curX, curY; // x, y of current point
+    float maxY;
+    int closestLineNum = 0;       // y of closest point
+    float ix, iy;   // x, y of intersect point
+    bool waterflag;
+    for (int i = 0; i < num_of_dot; i++) {
+        // init linked list water
+        SLList* temp = new SLList;
+        temp->insert(inputdots[i].x1, inputdots[i].y1);
+        inputdots[i].water = temp;
+        curX = inputdots[i].x1;
+        curY = inputdots[i].y1;
+        maxY = 728;
+        waterflag = 0;
+        ix = 0;
+        iy = 0;
+
+        while (curY < 728) {
+            // When water falls
+            if (waterflag == 0) {
+                maxY = 728;
+                for (int j = 0; j < num_of_line; j++) {
+                    if (inputlines[j].x1 <= curX && curX <= inputlines[j].x2) {
+                        ix = curX;
+                        iy = (float)((float)(inputlines[j].y1 - inputlines[j].y2) / (inputlines[j].x1 - inputlines[j].x2)) * (ix - inputlines[j].x1) + inputlines[j].y1;
+                        if (iy > curY && iy < maxY) {
+                            maxY = iy;
+                            closestLineNum = j;
+                        }
+                    }
+                }
+                curY = maxY;
+                inputdots[i].water->insert(curX, curY);
+                waterflag = 1;
+            }
+            // When water slides
+            else {
+                if (inputlines[closestLineNum].y1 <= inputlines[closestLineNum].y2) {
+                    curX = inputlines[closestLineNum].x2;
+                    curY = inputlines[closestLineNum].y2;
+
+                }
+                else {
+                    curX = inputlines[closestLineNum].x1;
+                    curY = inputlines[closestLineNum].y1;
+                }
+                inputdots[i].water->insert(curX, curY);
+                waterflag = 0;
+            }
+        }
+    }
+
 }
 
+Node* SLList::front() {
+    return first;
+}
 
+SLList::SLList() {
+    first = NULL;
+    end = NULL;
+}
+
+void SLList::insert(float x, float y) {
+    Node* p = new Node;
+    p->x = x;
+    p->y = y;
+    p->link = NULL;
+
+    if (first == NULL) {
+        first = p;
+        end = p;
+    }
+    else {
+        end->link = p;
+        end = end->link;
+    }
+}
+
+void SLList::freeSLL() {
+    Node* p = first;
+    while (p != nullptr) {
+        first = p->link;
+        delete p;
+        p = first;
+    }
+    delete first;
+}
+
+void SLList::printSLL() {
+    Node* p = first;
+    while (p != NULL) {
+        cout << "(" << p->x << "," << p->y << ")" << "->";
+        p = p->link;
+    }
+    cout << "(END)" << endl;
+}

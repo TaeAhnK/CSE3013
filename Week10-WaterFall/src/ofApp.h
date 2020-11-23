@@ -1,6 +1,33 @@
 #pragma once
 
 #include "ofMain.h"
+#include <stdlib.h>
+
+/* Classes for Linked List */
+class Node {
+public:
+	float x;
+	float y;
+	Node* link;
+
+	Node() {
+		x = NULL;
+		y = NULL;
+		link = NULL;
+	}
+};
+
+class SLList {
+private:
+	Node* first;
+	Node* end;
+public:
+	SLList();
+	Node* front();
+	void insert(float x, float y);
+	void freeSLL();
+	void printSLL();
+};
 
 typedef struct inputline {
 	int x1;
@@ -13,6 +40,7 @@ typedef struct inputline {
 typedef struct inputdot {
 	int x1;
 	int y1;
+	SLList* water;
 } inputdot;
 
 
@@ -40,7 +68,7 @@ public:
 	// flag variables
 	int draw_flag;
 	int load_flag;
-
+	int waterlineflag;
 	// Line segment and dot related variables
 	int num_of_line, num_of_dot;
 	float dot_diameter;
@@ -53,6 +81,4 @@ public:
 
 	void processOpenFileSelection(ofFileDialogResult openFileResult);
 	void initializeWaterLines(); // 2nd week portion.
-
 };
-

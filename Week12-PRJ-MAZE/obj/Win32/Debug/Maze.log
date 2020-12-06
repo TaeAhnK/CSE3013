@@ -1,0 +1,9 @@
+﻿  ofApp.cpp
+C:\Program Files\of_v0.11.0_vs2017_release\of_v0.11.0_vs2017_release\libs\openFrameworks\utils\ofUtils.h(1,1): warning C4819: 현재 코드 페이지(949)에서 표시할 수 없는 문자가 파일에 들어 있습니다. 데이터가 손실되지 않게 하려면 해당 파일을 유니코드 형식으로 저장하십시오.
+C:\Program Files\of_v0.11.0_vs2017_release\of_v0.11.0_vs2017_release\libs\openFrameworks\math\ofVec3f.h(1,1): warning C4819: 현재 코드 페이지(949)에서 표시할 수 없는 문자가 파일에 들어 있습니다. 데이터가 손실되지 않게 하려면 해당 파일을 유니코드 형식으로 저장하십시오.
+C:\Program Files\of_v0.11.0_vs2017_release\of_v0.11.0_vs2017_release\libs\openFrameworks\math\ofVec2f.h(1,1): warning C4819: 현재 코드 페이지(949)에서 표시할 수 없는 문자가 파일에 들어 있습니다. 데이터가 손실되지 않게 하려면 해당 파일을 유니코드 형식으로 저장하십시오.
+C:\Users\tenny\Desktop\Maze\src\ofApp.cpp(149,22): warning C4018: '<': signed 또는 unsigned가 일치하지 않습니다.
+C:\Users\tenny\Desktop\Maze\src\ofApp.cpp(220,4): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\tenny\Desktop\Maze\src\ofApp.cpp(372,21): warning C4018: '<': signed 또는 unsigned가 일치하지 않습니다.
+C:\Users\tenny\Desktop\Maze\src\ofApp.cpp(386,21): warning C4018: '<': signed 또는 unsigned가 일치하지 않습니다.
+  Maze.vcxproj -> C:\Users\tenny\Desktop\Maze\bin\Maze_debug.exe

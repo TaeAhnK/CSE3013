@@ -5,20 +5,18 @@
 class node {
 public:
 	int cellNum;
-	bool visited;
 	int parent;
 	node* link;
 
 	node() {
 		cellNum = -1;
-		visited = false;
 		parent = -1;
 		link = NULL;
 	}
 };
 
 class SLList {
-private:
+protected:
 	node* first;
 	node* end;
 
@@ -29,6 +27,23 @@ public:
 	void freeSLL();
 	void printSLL();
 };
+
+class Stack:public SLList {
+public:
+
+	node* pop();
+	void push(int i);
+	bool isEmpty();
+	node* top();
+};
+
+class Queue:public SLList {
+public:
+	node* pop();
+	void push(int i);
+	bool isEmpty();
+};
+
 
 class ofApp : public ofBaseApp{
 
@@ -54,7 +69,7 @@ class ofApp : public ofBaseApp{
 		bool readFile(const char* filename);
 		void freeMemory();
 
-		// Maze Functions
+		// Maze Variables and Functions
 		int loadFlag;
 		int mazeFlag;	// Draw Flag for Maze
 		int routeFlag;	// Draw Flag for DFS and BFS
@@ -73,4 +88,14 @@ class ofApp : public ofBaseApp{
 
 		void AdjListGen();
 		void WallSizeCal();
+
+		// Search Variables and Functions
+		bool* visitedDFS;	// visited
+		Stack* routeDFS;	// Stack S for route
+
+		bool* visitedBFS;	// visited
+		int* parentBFS;		// parent
+		
+		void DFS(int i);
+		void BFS();
 };

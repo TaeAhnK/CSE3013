@@ -23,6 +23,119 @@ void ofApp::update(){
 
 //--------------------------------------------------------------
 void ofApp::draw(){
+	/* Drawing DFS */
+	if (routeFlag == 1) {
+		/* Visited*/
+		float x1;
+		float y1;
+		ofSetColor(200, 200, 200);
+
+		y1 = startY + (sWall / 2);
+		for (int i = 0; i < HEIGHT; i++) {
+			x1 = startX + (sWall / 2);
+			for (int j = 0; j < WIDTH; j++) {
+				if (visitedDFS[(i * WIDTH) + j] == true) {
+					ofDrawRectangle(x1, y1, sWall + lWall, sWall + lWall);
+				}
+				x1 += (sWall + lWall);
+			}
+			y1 += (sWall + lWall);
+		}
+
+		/* Route */
+		node* p = routeDFS->front();
+		ofSetColor(0, 255, 0);
+
+		//while (p != NULL) {
+		//	x1 = startX + (sWall/2) + (p->cellNum % WIDTH) * (sWall + lWall);
+		//	y1 = startY + (sWall/2) + (p->cellNum / WIDTH) *(sWall + lWall);
+		//	ofDrawRectangle(x1, y1, sWall + lWall, sWall + lWall);
+		//	p = p->link;
+		//}
+
+		if (p->link == NULL) {
+			x1 = startX + (2 * sWall) + (p->cellNum % WIDTH) * (sWall + lWall);
+			y1 = startY + (2 * sWall) + (p->cellNum / WIDTH) * (sWall + lWall);
+			ofDrawRectangle(x1, y1, sWall, sWall);
+		}
+		else {
+			while (p->link != NULL) {
+				if (p->cellNum - p->link->cellNum == WIDTH) {
+					x1 = startX + (2 * sWall) + (p->link->cellNum % WIDTH) * (sWall + lWall);
+					y1 = startY + (2 * sWall) + (p->link->cellNum / WIDTH) * (sWall + lWall);
+					ofDrawRectangle(x1, y1, sWall, (2 * sWall) + lWall);
+				}
+				else if (p->cellNum - p->link->cellNum == -1 * WIDTH) {
+					x1 = startX + (2 * sWall) + (p->cellNum % WIDTH) * (sWall + lWall);
+					y1 = startY + (2 * sWall) + (p->cellNum / WIDTH) * (sWall + lWall);
+					ofDrawRectangle(x1, y1, sWall, (2 * sWall) + lWall);
+				}
+				else if (p->cellNum - p->link->cellNum == 1) {
+					x1 = startX + (2 * sWall) + (p->link->cellNum % WIDTH) * (sWall + lWall);
+					y1 = startY + (2 * sWall) + (p->link->cellNum / WIDTH) * (sWall + lWall);
+					ofDrawRectangle(x1, y1, (2 * sWall) + lWall, sWall);
+				}
+				else if (p->cellNum - p->link->cellNum == -1) {
+					x1 = startX + (2 * sWall) + (p->cellNum % WIDTH) * (sWall + lWall);
+					y1 = startY + (2 * sWall) + (p->cellNum / WIDTH) * (sWall + lWall);
+					ofDrawRectangle(x1, y1, (2 * sWall) + lWall, sWall);
+				}
+				p = p->link;
+			}
+		}
+	}
+
+	/* Draw BFS */
+	if (routeFlag == 2) {
+		/* Visited */
+		float x1;
+		float y1;
+		ofSetColor(200, 200, 200);
+
+		y1 = startY + (sWall / 2);
+		for (int i = 0; i < HEIGHT; i++) {
+			x1 = startX + (sWall / 2);
+			for (int j = 0; j < WIDTH; j++) {
+				if (visitedBFS[(i * WIDTH) + j] == true) {
+					ofDrawRectangle(x1, y1, sWall + lWall, sWall + lWall);
+				}
+				x1 += (sWall + lWall);
+			}
+			y1 += (sWall + lWall);
+		}
+
+		/* Route */
+		ofSetColor(0, 255, 0);
+		if (WIDTH * HEIGHT - 1 == 0) {
+			x1 = startX + (2 * sWall) + ((WIDTH*HEIGHT-1) % WIDTH) * (sWall + lWall);
+			y1 = startY + (2 * sWall) + ((WIDTH * HEIGHT - 1) / WIDTH) * (sWall + lWall);
+			ofDrawRectangle(x1, y1, sWall, sWall);
+		}
+		for (int i = WIDTH * HEIGHT - 1; i != 0; i = parentBFS[i]) {
+			if (i - parentBFS[i] == WIDTH) {
+				x1 = startX + (2 * sWall) + (parentBFS[i] % WIDTH) * (sWall + lWall);
+				y1 = startY + (2 * sWall) + (parentBFS[i] / WIDTH) * (sWall + lWall);
+				ofDrawRectangle(x1, y1, sWall, (2 * sWall) + lWall);
+			}
+			else if (i - parentBFS[i] == -1 * WIDTH) {
+				x1 = startX + (2 * sWall) + (i % WIDTH) * (sWall + lWall);
+				y1 = startY + (2 * sWall) + (i / WIDTH) * (sWall + lWall);
+				ofDrawRectangle(x1, y1, sWall, (2 * sWall) + lWall);
+			}
+			else if (i - parentBFS[i] == 1) {
+				x1 = startX + (2 * sWall) + (parentBFS[i] % WIDTH) * (sWall + lWall);
+				y1 = startY + (2 * sWall) + (parentBFS[i] / WIDTH) * (sWall + lWall);
+				ofDrawRectangle(x1, y1, (2 * sWall) + lWall, sWall);
+			}
+			else {
+				x1 = startX + (2 * sWall) + (i % WIDTH) * (sWall + lWall);
+				y1 = startY + (2 * sWall) + (i / WIDTH) * (sWall + lWall);
+				ofDrawRectangle(x1, y1, (2 * sWall) + lWall, sWall);
+			}
+		}
+	}
+
+
 	/* Draw Maze */
 	if (mazeFlag == 1) {
 		int lNum = 0;
@@ -63,25 +176,34 @@ void ofApp::draw(){
 			}
 		}
 	}
+
+
 }
 
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
 	/* Quit */
 	if (key == 'q') {
-		freeMemory();
+		if (loadFlag == 1) {
+			freeMemory();
+		}
 		_Exit(0);
 	}
 
-	////* DFS */
-	//if (key == 'd') {
+	/* Erase Route */
+	if (key == 'e' && loadFlag == 1) {
+		routeFlag = 0;
+	}
 
-	//}
+	/* DFS */
+	if (key == 'd' && loadFlag == 1) {
+		routeFlag = 1;
+	}
 
-	///* BFS */
-	//if (key == 'b') {	// BFS 
-
-	//}
+	/* BFS */
+	if (key == 'b' && loadFlag == 1) {
+		routeFlag = 2;
+	}
 
 }
 
@@ -190,15 +312,48 @@ bool ofApp::readFile(const char* fileName) {
 	WallSizeCal();
 	AdjListGen();
 	
+	// DFS
+	visitedDFS = new bool[WIDTH * HEIGHT];		// Init Visited
+	for (int i = 0; i < WIDTH * HEIGHT; i++) {
+		visitedDFS[i] = false;
+	}
+	routeDFS = new Stack;						// Init Stack S
+	DFS(0);
+	cout << "DFS Route Found (Press D to See the Route)" << endl;
+
+	// BFS
+	visitedBFS = new bool[WIDTH * HEIGHT];		// Init Visited
+	for (int i = 0; i < WIDTH * HEIGHT; i++) {
+		visitedBFS[i] = false;
+	}
+	parentBFS = new int[WIDTH * HEIGHT];		// Init Parent
+	for (int i = 0; i < WIDTH * HEIGHT; i++) {
+		parentBFS[i] = -1;
+	}
+	BFS();
+	cout << "BFS Route Found (Press B to See the Route)" << endl << endl;
+
 	file.close();
 	return true;
 }
 
+//--------------------------------------------------------------
 void ofApp::freeMemory() {
+	// Free Adj List
 	for (int i = 0; i < HEIGHT * WIDTH; i++) {
 		Adj[i].freeSLL();
 	}
 	delete[] Adj;
+
+	// Free DFS Variables
+	delete[] visitedDFS;
+	routeDFS->freeSLL();
+
+	// Free BFS Variables
+	delete[] visitedBFS;
+	delete[] parentBFS;
+
+	// Init Variables
 	mazeFlag = 0;
 	routeFlag = 0;
 	WIDTH = 0;
@@ -206,6 +361,7 @@ void ofApp::freeMemory() {
 	maz.clear();
 }
 
+//--------------------------------------------------------------
 void ofApp::AdjListGen() {
 	Adj = new SLList [WIDTH * HEIGHT];
 
@@ -235,7 +391,7 @@ void ofApp::AdjListGen() {
 		for (int j = 1; j < line.length(); j += 2) {
 			if (line[j] == ' ') {
 				Adj[idx].insert(cNum, idx);
-				Adj[cNum].insert(idx, cNum);
+				Adj[cNum].insert(idx, cNum);	// logically does not access out-of-index point
 			}
 			idx++;
 			cNum++;
@@ -252,6 +408,7 @@ void ofApp::AdjListGen() {
 	//}
 }
 
+//--------------------------------------------------------------
 void ofApp::WallSizeCal() {
 	float maxH, maxW;
 
@@ -275,6 +432,73 @@ void ofApp::WallSizeCal() {
 	printf("Drawing Maze with width %.2f...\n", lWall);
 }
 
+//--------------------------------------------------------------
+void ofApp::DFS(int i) {
+	/* DFS with Iterative */
+	bool flag;
+	routeDFS->push(i);		// S.push(v)
+	visitedDFS[i] = true;	// mark v as visited
+	while (routeDFS->isEmpty() == false) {
+		if (routeDFS->top()->cellNum == WIDTH * HEIGHT - 1) {	// found the target
+			return;
+		}
+		flag = false;
+		for (node* w = Adj[routeDFS->top()->cellNum].front(); w != NULL; w = w->link) {
+			if (visitedDFS[w->cellNum] == false) {	// S.top has an unvisited adjacent node u
+				routeDFS->push(w->cellNum);		// S.push(u)
+				visitedDFS[w->cellNum] = true;	// mark u as visited
+				flag = true;
+				break;
+			}
+		}
+		if (flag == false) {	// S.top does not an unvisited adjacent node
+			routeDFS->pop();
+		}
+	}
+
+	/* DFS with Recursive*/
+	//visitedDFS[i] = true;
+	//routeDFS->push(i);
+	//if (i == WIDTH * HEIGHT - 1) {
+	//	foundFlag = true;
+	//	return;
+	//}
+	//for (node* w = Adj[i].front(); w != NULL; w = w->link) {
+	//	if (visitedDFS[w->cellNum] == false) {
+	//		DFS(w->cellNum);
+	//		if (foundFlag == true) {
+	//			return;
+	//		}
+	//	}
+	//}
+	//routeDFS->pop();
+}
+
+//--------------------------------------------------------------
+void ofApp::BFS() {
+	Queue q;
+	int v;
+	q.push(0);				// enqueue(v)
+	visitedBFS[0] = true;	// mark v as visited
+
+	while (q.isEmpty() == false) { // Q not empty
+		v = q.pop()->cellNum;	// dequeue()
+		for (node* w = Adj[v].front(); w != NULL; w = w->link) {
+			if (visitedBFS[w->cellNum] == false) {	// for all unvisited adjacent nodes
+				q.push(w->cellNum);				// enqueue
+				visitedBFS[w->cellNum] = true;	// mark as visited
+				parentBFS[w->cellNum] = v;		// set parent 
+			}
+			if (w->cellNum == WIDTH * HEIGHT - 1) {	// found
+				q.freeSLL(); // free Q
+				return;
+			}
+		}
+	}
+	q.freeSLL();
+}
+
+//--------------------------------------------------------------
 SLList::SLList() {
 	first = NULL;
 	end = NULL;
@@ -317,4 +541,62 @@ void SLList::printSLL() {
 		p = p->link;
 	}
 	cout << "(END)" << endl;
+}
+
+//--------------------------------------------------------------
+node* Stack::pop() {
+	node* p = this->first;
+	if (this->first->link == NULL) {
+		this->first = NULL;
+	}
+	else {
+		this->first = this->first->link;
+	}
+	return p;
+}
+
+void Stack::push(int i) {
+	node* p = new node;
+	p->cellNum = i;
+	p->parent = 0;
+	p->link = this->first;
+	this->first = p;
+}
+
+bool Stack::isEmpty() {
+	if (this->first) {
+		return false;
+	}
+	else {
+		return true;
+	}
+}
+
+node* Stack::top() {
+	return first;
+}
+
+//--------------------------------------------------------------
+node* Queue::pop() {
+	node* p = this->first;
+	if (this->first->link == NULL) {
+		this->first = NULL;
+	}
+	else {
+		this->first = this->first->link;
+	}
+	return p;
+}
+
+void Queue::push(int i) {
+	this->insert(i, 0);
+}
+
+bool Queue::isEmpty() {
+	if (this->first != NULL) {
+		return false;
+	}
+	else {
+		return true;
+	}
 }
